@@ -9,33 +9,36 @@ jobs:
       - name: Select Xcode 16
         run: sudo xcode-select -s /Applications/Xcode_16.app
 
-      - name: Build for iOS Device
+      - name: Build Swift Package App
         run: |
           xcodebuild build \
           -scheme "Devtools" \
           -destination "generic/platform=iOS" \
           -derivedDataPath build \
           CODE_SIGNING_ALLOWED=NO \
-          CODE_SIGNING_REQUIRED=NO \
-          AD_HOC_CODE_SIGNING_ALLOWED=YES
+          CODE_SIGNING_REQUIRED=NO
 
-      - name: Check and Pack IPA
+      - name: List Files (للتحقق)
+        run: |
+          echo "جاري البحث عن ملف التطبيق..."
+          find build -name "*.app" -type d
+
+      - name: Create IPA
         run: |
           mkdir -p Payload
-          # البحث عن ملف الـ .app في مجلد البناء الجديد
-          APP_PATH=$(find build/Build/Products -name "*.app" -type d | head -n 1)
+          # هذا الأمر سيبحث عن أي ملف .app ويضعه في المجلد الصحيح
+          find build -name "*.app" -type d -exec cp -R {} Payload/ \;
           
-          if [ -z "$APP_PATH" ]; then
-            echo "Error: Application file (.app) not found!"
-            exit 1
+          # التحقق من أن المجلد ليس فارغاً
+          if [ -z "$(ls -A Payload)" ]; then
+             echo "خطأ: لم يتم العثور على ملفات داخل Payload"
+             exit 1
           fi
           
-          echo "Found App at: $APP_PATH"
-          cp -R "$APP_PATH" Payload/
           zip -r Devtools.ipa Payload
 
-      - name: Upload IPA
+      - name: Upload
         uses: actions/upload-artifact@v4
         with:
-          name: Devtools-Real-File
+          name: Real-Devtools-App
           path: Devtools.ipa
