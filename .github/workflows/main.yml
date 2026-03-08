@@ -6,39 +6,40 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Select Xcode 16
+      - name: Force Xcode 16
         run: sudo xcode-select -s /Applications/Xcode_16.app
 
-      - name: Build Swift Package App
+      - name: Build Project
         run: |
           xcodebuild build \
           -scheme "Devtools" \
           -destination "generic/platform=iOS" \
-          -derivedDataPath build \
+          -derivedDataPath output \
           CODE_SIGNING_ALLOWED=NO \
           CODE_SIGNING_REQUIRED=NO
 
-      - name: List Files (للتحقق)
-        run: |
-          echo "جاري البحث عن ملف التطبيق..."
-          find build -name "*.app" -type d
-
-      - name: Create IPA
+      - name: Global Search & Pack
         run: |
           mkdir -p Payload
-          # هذا الأمر سيبحث عن أي ملف .app ويضعه في المجلد الصحيح
-          find build -name "*.app" -type d -exec cp -R {} Payload/ \;
+          # البحث في كل مكان عن ملف .app الناتج
+          APP_PATH=$(find output -name "*.app" -type d | grep -v "Index" | head -n 1)
           
-          # التحقق من أن المجلد ليس فارغاً
-          if [ -z "$(ls -A Payload)" ]; then
-             echo "خطأ: لم يتم العثور على ملفات داخل Payload"
-             exit 1
+          if [ -z "$APP_PATH" ]; then
+            echo "الملف لسه مختفي! بجرب أبحث في المجلدات الرئيسية.."
+            APP_PATH=$(find . -name "*.app" -type d | head -n 1)
           fi
-          
-          zip -r Devtools.ipa Payload
+
+          if [ -n "$APP_PATH" ]; then
+            echo "لقيته! المسار هو: $APP_PATH"
+            cp -R "$APP_PATH" Payload/
+            zip -r Devtools.ipa Payload
+          else
+            echo "ما حصلت شي.. تأكد من اسم الـ Scheme في Package.swift"
+            exit 1
+          fi
 
       - name: Upload
         uses: actions/upload-artifact@v4
         with:
-          name: Real-Devtools-App
+          name: Full-App-Package
           path: Devtools.ipa
