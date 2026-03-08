@@ -4,7 +4,7 @@ jobs:
   build:
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       
       - name: Select Xcode
         run: sudo xcode-select -s /Applications/Xcode_15.2.app
@@ -20,11 +20,11 @@ jobs:
       - name: Prepare IPA Folder
         run: |
           mkdir -p Payload
-          mv build/Build/Products/Debug-iphoneos/*.app Payload/
+          cp -R build/Build/Products/Debug-iphoneos/*.app Payload/
           zip -r App.ipa Payload
 
       - name: Upload IPA
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: MyFinalApp
           path: App.ipa
