@@ -1,4 +1,4 @@
-name: Build IPA
+name: Build App
 on: [push]
 jobs:
   build:
@@ -9,11 +9,11 @@ jobs:
       - name: Select Xcode 16
         run: sudo xcode-select -s /Applications/Xcode_16.app
 
-      - name: Build for iOS
+      - name: Build for Mac Catalyst
         run: |
           xcodebuild build \
           -scheme "Devtools" \
-          -destination "generic/platform=iOS" \
+          -destination "platform=macOS,variant=Mac Catalyst" \
           -derivedDataPath build \
           CODE_SIGNING_ALLOWED=NO \
           CODE_SIGNING_REQUIRED=NO
@@ -21,11 +21,12 @@ jobs:
       - name: Create IPA Structure
         run: |
           mkdir -p Payload
+          # البحث عن مجلد التطبيق الناتج ووضعه في بايلود
           find build -name "*.app" -exec cp -R {} Payload/ \;
           zip -r Devtools.ipa Payload
 
-      - name: Upload IPA
+      - name: Upload
         uses: actions/upload-artifact@v4
         with:
-          name: Devtools
+          name: Devtools-Package
           path: Devtools.ipa
