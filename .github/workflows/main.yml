@@ -1,0 +1,16 @@
+name: Build IPA
+on: [push]
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Build Archive
+        run: xcodebuild archive -scheme "My App" -destination "generic/platform=iOS" -archivePath "MyApp.xcarchive"
+      - name: Export IPA
+        run: xcodebuild -exportArchive -archivePath "MyApp.xcarchive" -exportPath . -exportOptionsPlist exportOptions.plist
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: App-IPA
+          path: "*.ipa"
