@@ -6,25 +6,23 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Build Swift Package
+      - name: Build for iOS
         run: |
           xcodebuild build \
-          -target "devtools" \
+          -scheme "devtools" \
           -destination "generic/platform=iOS" \
           -derivedDataPath build \
           CODE_SIGNING_ALLOWED=NO \
           CODE_SIGNING_REQUIRED=NO
 
-      - name: Create IPA Structure
+      - name: Create IPA
         run: |
           mkdir -p Payload
-          # البحث عن ملف الـ .app ونسخه
-          APP_PATH=$(find build/Build/Products -name "*.app" | head -n 1)
-          cp -R "$APP_PATH" Payload/
+          find build -name "*.app" -exec cp -R {} Payload/ \;
           zip -r App.ipa Payload
 
-      - name: Upload IPA
+      - name: Upload
         uses: actions/upload-artifact@v4
         with:
-          name: MyFinalApp
+          name: FinalApp
           path: App.ipa
