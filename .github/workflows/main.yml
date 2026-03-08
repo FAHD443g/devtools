@@ -6,26 +6,25 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       
-      - name: Select Xcode Version
+      - name: Select Xcode
         run: sudo xcode-select -s /Applications/Xcode_15.2.app
-        
-      - name: Build Archive
+
+      - name: Build App
         run: |
-          xcodebuild archive \
-          -packagePath . \
-          -scheme "My App" \
+          xcodebuild build \
+          -scheme "devtools" \
           -destination "generic/platform=iOS" \
-          -archivePath "MyApp.xcarchive"
-          
-      - name: Export IPA
+          -derivedDataPath build \
+          CODE_SIGNING_ALLOWED=NO
+
+      - name: Prepare IPA Folder
         run: |
-          xcodebuild -exportArchive \
-          -archivePath "MyApp.xcarchive" \
-          -exportPath . \
-          -exportOptionsPlist exportOptions.plist
-          
-      - name: Upload Artifact
+          mkdir -p Payload
+          mv build/Build/Products/Debug-iphoneos/*.app Payload/
+          zip -r App.ipa Payload
+
+      - name: Upload IPA
         uses: actions/upload-artifact@v3
         with:
-          name: App-IPA
-          path: "*.ipa"
+          name: MyFinalApp
+          path: App.ipa
