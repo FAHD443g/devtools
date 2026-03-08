@@ -1,4 +1,4 @@
-name: Build App
+name: Build IPA
 on: [push]
 jobs:
   build:
@@ -9,24 +9,33 @@ jobs:
       - name: Select Xcode 16
         run: sudo xcode-select -s /Applications/Xcode_16.app
 
-      - name: Build for Mac Catalyst
+      - name: Build for iOS Device
         run: |
           xcodebuild build \
           -scheme "Devtools" \
-          -destination "platform=macOS,variant=Mac Catalyst" \
+          -destination "generic/platform=iOS" \
           -derivedDataPath build \
           CODE_SIGNING_ALLOWED=NO \
-          CODE_SIGNING_REQUIRED=NO
+          CODE_SIGNING_REQUIRED=NO \
+          AD_HOC_CODE_SIGNING_ALLOWED=YES
 
-      - name: Create IPA Structure
+      - name: Check and Pack IPA
         run: |
           mkdir -p Payload
-          # البحث عن مجلد التطبيق الناتج ووضعه في بايلود
-          find build -name "*.app" -exec cp -R {} Payload/ \;
+          # البحث عن ملف الـ .app في مجلد البناء الجديد
+          APP_PATH=$(find build/Build/Products -name "*.app" -type d | head -n 1)
+          
+          if [ -z "$APP_PATH" ]; then
+            echo "Error: Application file (.app) not found!"
+            exit 1
+          fi
+          
+          echo "Found App at: $APP_PATH"
+          cp -R "$APP_PATH" Payload/
           zip -r Devtools.ipa Payload
 
-      - name: Upload
+      - name: Upload IPA
         uses: actions/upload-artifact@v4
         with:
-          name: Devtools-Package
+          name: Devtools-Real-File
           path: Devtools.ipa
